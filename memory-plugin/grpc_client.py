@@ -154,6 +154,36 @@ class MemoryGrpcClient:
             self._channel = None
 
 
+class MemoryClient:
+    """同步适配器，供集成测试和同步代码使用。"""
+
+    def __init__(self, host: str = "127.0.0.1", port: int = 50051):
+        self._async = MemoryGrpcClient(host, port)
+
+    def store_memory(self, agent_id: str, namespace: str, content: str, importance: int = 5) -> MemoryRecord:
+        import asyncio
+        record = MemoryRecord(agent_id=agent_id, namespace=namespace, content=content, importance=importance)
+        record.id = asyncio.run(self._async.store(record))
+        return record
+
+    def search_memories(self, agent_id: str, query: str, namespace: str = "shared", limit: int = 10) -> list:
+        import asyncio
+        return asyncio.run(self._async.search(agent_id, query, namespace, limit))
+
+    def get_context(self, project_name: str, agent_id: str) -> str:
+        import asyncio
+        ctx = asyncio.run(self._async.get_project_context(project_name, agent_id))
+        return ctx.context
+
+    def trigger_dream(self, agent_id: str, namespace: str = "shared") -> str:
+        import asyncio
+        dream = asyncio.run(self._async.dream(agent_id, namespace))
+        return "\n".join(dream.inferences) if dream.inferences else "梦境生成完成"
+
+    def clear_memories(self, agent_id: str):
+        pass
+
+
 def _proto_to_record(proto) -> MemoryRecord:
     return MemoryRecord(
         id=proto.id,

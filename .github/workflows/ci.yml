@@ -11,7 +11,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: [3.11, 3.12, 3.13, 3.14]
+        python-version: ['3.11', '3.12', '3.13']
 
     steps:
     - uses: actions/checkout@v3
@@ -26,25 +26,20 @@ jobs:
         python -m pip install --upgrade pip
         pip install grpcio grpcio-tools pytest pytest-cov
     
-    - name: Generate protobuf files
+    - name: Start memory server (background)
       run: |
-        cd proto
-        python -m grpc_tools.protoc -I. --python_out=. --grpc_python_out=. memory.proto
-        cd ..
-        cp proto/memory_pb2.py memory-server/
-        cp proto/memory_pb2_grpc.py memory-server/
-        cp proto/memory_pb2.py memory-plugin/
-        cp proto/memory_pb2_grpc.py memory-plugin/
-    
+        python memory-server/server.py --port 50051 &
+        sleep 2
+        echo "Server PID: $!"
+
     - name: Run tests
       run: |
-        cd memory-server
-        python -m pytest ../examples/integration_test.py -v --cov=.
+        python -m pytest examples/integration_test.py -v --cov=memory-server/
     
     - name: Upload coverage to Codecov
       uses: codecov/codecov-action@v3
       with:
-        file: ./memory-server/coverage.xml
+        file: ./coverage.xml
         flags: unittests
         name: codecov-umbrella
 

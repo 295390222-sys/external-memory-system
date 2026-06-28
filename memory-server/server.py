@@ -1,4 +1,4 @@
-#!/Users/wangjuncong/memory-system/venv/bin/python3
+#!/usr/bin/env python3
 """Memory gRPC server — pure Python, no Rust/Docker needed."""
 
 import os
