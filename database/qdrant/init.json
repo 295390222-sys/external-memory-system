@@ -1,0 +1,30 @@
+{
+  "collections": [
+    {
+      "name": "memory_vectors",
+      "vectors": {
+        "size": 768,
+        "distance": "Cosine"
+      },
+      "optimizers_config": {
+        "default_segment_number": 2,
+        "memmap_threshold_kb": 20000
+      },
+      "wal_config": {
+        "wal_capacity_mb": 32
+      },
+      "hnsw_config": {
+        "m": 16,
+        "ef_construct": 100,
+        "full_scan_threshold": 10000
+      },
+      "payload_schema": {
+        "agent_id": { "type": "keyword" },
+        "namespace": { "type": "keyword" },
+        "memory_type": { "type": "keyword" },
+        "importance": { "type": "integer" },
+        "created_at": { "type": "integer" }
+      }
+    }
+  ]
+}
