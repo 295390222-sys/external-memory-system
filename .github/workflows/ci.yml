@@ -1,0 +1,96 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: [3.11, 3.12, 3.13, 3.14]
+
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ matrix.python-version }}
+    
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install grpcio grpcio-tools pytest pytest-cov
+    
+    - name: Generate protobuf files
+      run: |
+        cd proto
+        python -m grpc_tools.protoc -I. --python_out=. --grpc_python_out=. memory.proto
+        cd ..
+        cp proto/memory_pb2.py memory-server/
+        cp proto/memory_pb2_grpc.py memory-server/
+        cp proto/memory_pb2.py memory-plugin/
+        cp proto/memory_pb2_grpc.py memory-plugin/
+    
+    - name: Run tests
+      run: |
+        cd memory-server
+        python -m pytest ../examples/integration_test.py -v --cov=.
+    
+    - name: Upload coverage to Codecov
+      uses: codecov/codecov-action@v3
+      with:
+        file: ./memory-server/coverage.xml
+        flags: unittests
+        name: codecov-umbrella
+
+  build:
+    needs: test
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v2
+    
+    - name: Login to Docker Hub
+      uses: docker/login-action@v2
+      with:
+        username: ${{ secrets.DOCKER_USERNAME }}
+        password: ${{ secrets.DOCKER_PASSWORD }}
+    
+    - name: Build and push Docker images
+      run: |
+        # 构建gRPC服务器镜像
+        docker build -f Dockerfile.server -t coalball/external-memory-server:latest .
+        docker push coalball/external-memory-server:latest
+        
+        # 构建插件镜像
+        docker build -f Dockerfile.plugin -t coalball/external-memory-plugin:latest .
+        docker push coalball/external-memory-plugin:latest
+        
+        # 构建Rust核心镜像（如果启用）
+        if [ -f "memory-core-rust/Dockerfile" ]; then
+          docker build -f memory-core-rust/Dockerfile -t coalball/external-memory-core:latest .
+          docker push coalball/external-memory-core:latest
+        fi
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Deploy to production
+      run: |
+        echo "部署到生产环境..."
+        # 这里可以添加部署脚本
+        # 例如：kubectl apply -f k8s/production/
