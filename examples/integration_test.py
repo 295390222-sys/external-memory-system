@@ -41,13 +41,13 @@ class TestExternalMemorySystem(unittest.TestCase):
             agent_id=self.agent_id,
             namespace="shared",
             content=content,
-            importance=0.8
+            importance=8
         )
         
         self.assertIsNotNone(result.id)
         self.assertEqual(result.content, content)
         self.assertEqual(result.namespace, "shared")
-        self.assertEqual(result.importance, 0.8)
+        self.assertEqual(result.importance, 8)
         
         print(f"✓ 记忆存储成功: {result.id}")
     
@@ -57,9 +57,9 @@ class TestExternalMemorySystem(unittest.TestCase):
         
         # 存储测试数据
         test_memories = [
-            ("学习Python编程", 0.9),
-            ("完成项目原型设计", 0.8),
-            ("参加技术分享会", 0.7)
+            ("学习Python编程", 9),
+            ("完成项目原型设计", 8),
+            ("参加技术分享会", 7)
         ]
         
         for content, importance in test_memories:
@@ -103,7 +103,7 @@ class TestExternalMemorySystem(unittest.TestCase):
                 agent_id=self.agent_id,
                 namespace="project/ai-drama",
                 content=content,
-                importance=0.8
+                importance=8
             )
         
         # 获取上下文
@@ -133,7 +133,7 @@ class TestExternalMemorySystem(unittest.TestCase):
                 agent_id=self.agent_id,
                 namespace="shared",
                 content=content,
-                importance=0.7
+                importance=7
             )
         
         # 触发梦境
@@ -159,7 +159,7 @@ class TestExternalMemorySystem(unittest.TestCase):
             agent_id=self.agent_id,
             namespace="shared",
             content=content,
-            importance=0.8
+            importance=8
         )
         
         # 存储到个人命名空间
@@ -167,7 +167,7 @@ class TestExternalMemorySystem(unittest.TestCase):
             agent_id=self.agent_id,
             namespace="personal",
             content=content,
-            importance=0.8
+            importance=8
         )
         
         # 验证隔离
@@ -205,7 +205,7 @@ class TestExternalMemorySystem(unittest.TestCase):
                 agent_id=self.agent_id,
                 namespace="shared",
                 content=f"性能测试记忆 {i}",
-                importance=0.5
+                importance=5
             )
         
         storage_time = time.time() - start_time
