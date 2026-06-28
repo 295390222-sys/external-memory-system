@@ -1,0 +1,31 @@
+plugin:
+  name: memory
+  version: 0.1.0
+  description: Memory persistence plugin for OpenClaw
+
+memory:
+  grpc_host: "127.0.0.1"
+  grpc_port: 50051
+  default_namespace: "shared"
+  scoring:
+    threshold_working: 5
+    threshold_episodic: 8
+  inject:
+    max_context_tokens: 4096
+    min_relevance: 0.6
+
+isolation:
+  projects:
+    ai-drama:
+      read:
+        - shared/*
+        - project/ai-drama/*
+      write:
+        - project/ai-drama/*
+  agents:
+    content:
+      read:
+        - shared/*
+        - content/*
+      write:
+        - content/*
