@@ -1,0 +1,95 @@
+version: "3.9"
+
+services:
+  # gRPC服务
+  memory-server:
+    build:
+      context: .
+      dockerfile: Dockerfile.server
+    ports:
+      - "50051:50051"
+    volumes:
+      - sqlite_data:/app/database
+      - ./memory-server:/app/memory-server
+      - ./memory-plugin:/app/memory-plugin
+    environment:
+      - PYTHONPATH=/app
+      - MEMORY_DB_PATH=/app/database/memory.db
+      - MEMORY_GRPC_PORT=50051
+      - MEMORY_NAMESPACE=shared
+    restart: unless-stopped
+    depends_on:
+      - qdrant
+
+  # Qdrant向量数据库
+  qdrant:
+    image: qdrant/qdrant:latest
+    ports:
+      - "6333:6333"
+      - "6334:6334"
+    volumes:
+      - qdrant_data:/qdrant/storage
+      - ./database/qdrant/init.json:/qdrant/config/init.json:ro
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:6333/healthz"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+    restart: unless-stopped
+
+  # Rust核心服务（可选）
+  memory-core:
+    build:
+      context: ./memory-core-rust
+      dockerfile: Dockerfile
+    ports:
+      - "50052:50052"
+    volumes:
+      - sqlite_data:/data
+    environment:
+      RUST_LOG: info
+      SQLITE_PATH: /data/memory.db
+      QDRANT_URL: http://qdrant:6334
+      GRPC_ADDR: 0.0.0.0:50052
+    depends_on:
+      qdrant:
+        condition: service_healthy
+    restart: unless-stopped
+    profiles:
+      - rust
+
+  # OpenClaw插件
+  memory-plugin:
+    build:
+      context: .
+      dockerfile: Dockerfile.plugin
+    volumes:
+      - ./memory-plugin:/app/memory-plugin
+      - sqlite_data:/app/database
+    environment:
+      - PYTHONPATH=/app
+      - MEMORY_DB_PATH=/app/database/memory.db
+      - MEMORY_GRPC_HOST=memory-server
+      - MEMORY_GRPC_PORT=50051
+    restart: unless-stopped
+    depends_on:
+      - memory-server
+
+  # Web UI（可选）
+  web-ui:
+    build:
+      context: ./web-ui
+      dockerfile: Dockerfile
+    ports:
+      - "8080:8080"
+    environment:
+      - MEMORY_GRPC_URL=memory-server:50051
+    restart: unless-stopped
+    depends_on:
+      - memory-server
+    profiles:
+      - web
+
+volumes:
+  sqlite_data:
+  qdrant_data:
