@@ -73,7 +73,7 @@ class TestExternalMemorySystem(unittest.TestCase):
         # 搜索测试
         results = self.client.search_memories(
             agent_id=self.agent_id,
-            query="技术",
+            query="编程",
             namespace="shared",
             limit=10
         )
