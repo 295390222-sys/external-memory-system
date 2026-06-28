@@ -1,0 +1,112 @@
+syntax = "proto3";
+
+package memory;
+
+service MemoryService {
+  rpc StoreMemory(StoreRequest) returns (StoreResponse);
+  rpc SearchMemory(SearchRequest) returns (SearchResponse);
+  rpc DeleteMemory(DeleteRequest) returns (DeleteResponse);
+  rpc SummarizeMemory(SummaryRequest) returns (SummaryResponse);
+  rpc Dreaming(DreamRequest) returns (DreamResponse);
+  rpc GetProjectContext(ProjectRequest) returns (ProjectResponse);
+}
+
+enum MemoryType {
+  WORKING = 0;
+  EPISODIC = 1;
+  SEMANTIC = 2;
+  PROCEDURAL = 3;
+  DREAM = 4;
+}
+
+message Entity {
+  string name = 1;
+  string relation = 2;
+  map<string, string> attributes = 3;
+}
+
+message MemoryRecord {
+  string id = 1;
+  string agent_id = 2;
+  string namespace = 3;
+  MemoryType memory_type = 4;
+  int32 importance = 5;
+  string content = 6;
+  repeated float embedding = 7;
+  repeated Entity entities = 8;
+  int64 created_at = 9;
+  int64 updated_at = 10;
+  int32 access_count = 11;
+  int64 last_access = 12;
+  optional int64 expire_at = 13;
+}
+
+message StoreRequest {
+  MemoryRecord record = 1;
+}
+
+message StoreResponse {
+  string id = 1;
+  bool success = 2;
+}
+
+message SearchRequest {
+  string agent_id = 1;
+  string query = 2;
+  int32 limit = 3;
+  string namespace = 4;
+  MemoryType memory_type = 5;
+  bool use_keyword = 6;
+  bool use_vector = 7;
+  bool use_graph = 8;
+}
+
+message SearchResponse {
+  repeated MemoryRecord results = 1;
+}
+
+message DeleteRequest {
+  string id = 1;
+  string agent_id = 2;
+  string namespace = 3;
+}
+
+message DeleteResponse {
+  bool success = 1;
+}
+
+message SummaryRequest {
+  string agent_id = 1;
+  string namespace = 2;
+  int64 since = 3;
+  int64 until = 4;
+}
+
+message SummaryResponse {
+  string summary = 1;
+  repeated string key_points = 2;
+  string memory_type = 3;
+}
+
+message DreamRequest {
+  string agent_id = 1;
+  string namespace = 2;
+}
+
+message DreamResponse {
+  repeated MemoryRecord new_memories = 1;
+  repeated string patterns = 2;
+  repeated string inferences = 3;
+  repeated string hypotheses = 4;
+}
+
+message ProjectRequest {
+  string project = 1;
+  string agent_id = 2;
+}
+
+message ProjectResponse {
+  string context = 1;
+  repeated MemoryRecord recent_memories = 2;
+  repeated string related_projects = 3;
+}
